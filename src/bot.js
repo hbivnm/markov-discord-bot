@@ -9,6 +9,17 @@ client.login(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
     console.log(`[i] ${client.user.tag} has logged in!`);
+    client.user.setActivity("your every move.", { type: "WATCHING"})
+
+    console.log(client.channels.cache.get("538373899109400608").messages)
+
+    /*
+    client.channels.cache.get("538373899109400608")
+        .fetchMessages({limit: 1})
+        .then(messages => {
+            console.log(`[${messages.first().author.name}]${messages.first().content}`)
+        });
+    */
 })
 
 function inPermittedChannel(channelName) {
@@ -16,6 +27,8 @@ function inPermittedChannel(channelName) {
 	if (config.permittedChannels.indexOf(channelName) > -1) return true;
 	else return false;
 }
+
+
 
 client.on("message", (message) => {
     try {
