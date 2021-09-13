@@ -1,0 +1,25 @@
+{
+    "name": "markov-discord-bot",
+    "version": "1.0.0",
+    "description": "A discord bot running a markov chain, or in the words of the bot \"bot running a markov chain\".",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/HybridVenom/markov-discord-bot.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/HybridVenom/markov-discord-bot/issues"
+    },
+    "homepage": "https://github.com/HybridVenom/markov-discord-bot#readme",
+    "dependencies": {
+      "discord.js": "^12.2.0",
+      "dotenv": "^10.0.0",
+      "fs": "^0.0.1-security"
+    }
+  }
