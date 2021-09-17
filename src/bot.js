@@ -4,6 +4,7 @@ const fs = require("fs");
 const { Client } = require("discord.js");
 
 // Global
+const ballquotes = ["don't count on it.", "as I see it, yes.", "it is certain.", "reply hazy, try again.", "my reply is no.", "most likely.", "it is decidedly so.", "ask again later.", "my sources say no.", "outlook good.", "without a doubt.", "better not tell you now.", "yes - definitely.", "cannot predict now.", "you may rely on it.", "concentrate and ask again.", "outlook not so good.", "signs point to yes", "very doubtful.", "yes."];
 let markovMessage;
 
 // Init
@@ -43,11 +44,13 @@ client.on("message", (message) => {
                 case "§rand":
                     message.reply(Math.floor(Math.random() * 100));
                     break;
-                case "§ms":
-                    message.reply(getMarkovMessage())
+                case "§8ball":
+                    message.reply(get8Ball())
                     break;
                 default:
-                    if (Math.random() <= 0.10)
+                    let rand = Math.random();
+                    console.log("Rolled: ", rand);
+                    if (rand <= 0.10)
                         message.reply(getMarkovMessage())
                     break;
 			}
@@ -56,6 +59,10 @@ client.on("message", (message) => {
 		console.log(ex);
 	}
 });
+
+function get8Ball() {
+    return ballquotes[Math.floor(Math.random() * (ballquotes.length + 1))];
+}
 
 function getMarkovMessage() {
     console.log("\nGetting markov message...")
