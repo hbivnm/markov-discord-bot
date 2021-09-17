@@ -7,40 +7,84 @@ const { Client } = require("discord.js");
 const client = new Client();
 client.login(process.env.BOT_TOKEN);
 
-client.on("ready", () => {
-    console.log(`[i] ${client.user.tag} has logged in!`);
-    client.user.setActivity("your every move.", { type: "WATCHING"})
-
-    console.log(client.channels.cache.get("538373899109400608").messages)
-
-    /*
-    client.channels.cache.get("538373899109400608")
-        .fetchMessages({limit: 1})
-        .then(messages => {
-            console.log(`[${messages.first().author.name}]${messages.first().content}`)
-        });
-    */
+let dictionary;
+fs.readFile("./dictionary.txt", "utf8", (err, data) => {
+    if (err) {
+        console.error(err);
+        return err;
+    }
+    dictionary = data;
 })
+
+client.on("ready", () => {
+	console.log(`[i] ${client.user.tag} has logged in!`);
+	client.user.setActivity("your every move.", { type: "WATCHING" });
+});
 
 function inPermittedChannel(channelName) {
 	let config = JSON.parse(fs.readFileSync(__dirname + "/../bot-config.json"));
-	if (config.permittedChannels.indexOf(channelName) > -1) return true;
-	else return false;
+    if (config.permittedChannels.indexOf(channelName) > -1)
+        return true;
+    else
+        return false;
 }
 
-
-
 client.on("message", (message) => {
-    try {
-        if (message.content[0] === "§" && inPermittedChannel(message.channel.name)) {
-            switch(message.content.split(" ")[0]) {
-                case "§ping":
-                    message.reply("Pong!");
+	try {
+		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) {
+			switch (message.content.split(" ")[0]) {
+				case "§ping":
+					message.reply("Pong!");
+					break;
+				case "§random":
+                case "§rand":
+                    message.reply(Math.floor(Math.random() * 100));
                     break;
-            }
-        }
-    } catch (ex) {
-        console.log(ex);
-    }
-})
+                default:
+                    if (Math.random() <= 0.10)
+                        message.reply(getMarkovMessage())
+                    break;
+			}
+		}
+	} catch (ex) {
+		console.log(ex);
+	}
+});
 
+function getMarkovMessage() {
+    //return "<a:SHUNGITE:713712006120734722>";
+    let lines = dictionary.split('\n');
+    let line = "";
+    let markovsentance = "";
+
+    let flag = true;
+    while (flag) {
+        line = lines[Math.floor(Math.random() * (lines.length + 1))];
+        words = line.split(" ");
+
+        console.log("line: " + line)
+
+        for (let i = 0; i < words.length; i++) {
+            if (Math.random() <= 0.5)
+                markovsentance += words[i] + " ";
+            else
+                markovsentance += "";
+
+            console.log("ms: " + markovsentance);
+        }
+
+        if (Math.random() >= 0.25)
+            flag = !flag;
+    }
+    
+    return markovsentance;
+}
+
+/*
+    TODO:
+        If user sends only an emote from the server, have a 10% to answer with same emote without tagging them
+            ex.
+            HbiVnm: FeelsOkayMan
+            LeastInhumanBot: FeelsOkayMan
+
+*/

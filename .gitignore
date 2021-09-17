@@ -107,3 +107,4 @@ dist
 /game/game_data/user_database/
 bot-config.json
 test.js
+dictionary.txt
