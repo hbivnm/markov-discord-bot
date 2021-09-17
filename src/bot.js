@@ -3,6 +3,9 @@ require("dotenv").config();
 const fs = require("fs");
 const { Client } = require("discord.js");
 
+// Global
+let markovMessage;
+
 // Init
 const client = new Client();
 client.login(process.env.BOT_TOKEN);
@@ -18,7 +21,7 @@ fs.readFile("./dictionary.txt", "utf8", (err, data) => {
 
 client.on("ready", () => {
 	console.log(`[i] ${client.user.tag} has logged in!`);
-	client.user.setActivity("your every move.", { type: "WATCHING" });
+    client.user.setActivity("your every move.", { type: "WATCHING" });
 });
 
 function inPermittedChannel(channelName) {
@@ -40,6 +43,9 @@ client.on("message", (message) => {
                 case "§rand":
                     message.reply(Math.floor(Math.random() * 100));
                     break;
+                case "§ms":
+                    message.reply(getMarkovMessage())
+                    break;
                 default:
                     if (Math.random() <= 0.10)
                         message.reply(getMarkovMessage())
@@ -52,6 +58,7 @@ client.on("message", (message) => {
 });
 
 function getMarkovMessage() {
+    console.log("\nGetting markov message...")
     //return "<a:SHUNGITE:713712006120734722>";
     let lines = dictionary.split('\n');
     let line = "";
@@ -65,18 +72,23 @@ function getMarkovMessage() {
         console.log("line: " + line)
 
         for (let i = 0; i < words.length; i++) {
-            if (Math.random() <= 0.5)
+            if (Math.random() <= 0.4 && words[i] != "NaN" && words[i] != undefined)
                 markovsentance += words[i] + " ";
             else
                 markovsentance += "";
 
-            console.log("ms: " + markovsentance);
+            console.log("ms: ", markovsentance);
+            markovsentance.replace("  ", " ")
+            markovsentance.replace("\n", "")
         }
 
-        if (Math.random() >= 0.25)
-            flag = !flag;
+        if (Math.random() >= 0.5 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
+            flag = false;
     }
     
+    console.log("Returning: ", markovsentance)
+    console.log("Length: ", markovsentance.length)
+
     return markovsentance;
 }
 
