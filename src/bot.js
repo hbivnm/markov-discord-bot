@@ -45,7 +45,8 @@ client.on("message", (message) => {
                     message.reply(Math.floor(Math.random() * 100));
                     break;
                 case "§8ball":
-                    message.reply(get8Ball())
+                    if (message.channel.name == "8ball")
+                        message.reply(get8Ball())
                     break;
                 case "§ms":
                     if (message.channel.name == "bot-test")
