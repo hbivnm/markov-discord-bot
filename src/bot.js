@@ -4,7 +4,7 @@ const fs = require("fs");
 const { Client } = require("discord.js");
 
 // Global
-const ballquotes = ["don't count on it.", "as I see it, yes.", "it is certain.", "reply hazy, try again.", "my reply is no.", "most likely.", "it is decidedly so.", "ask again later.", "my sources say no.", "outlook good.", "without a doubt.", "better not tell you now.", "yes - definitely.", "cannot predict now.", "you may rely on it.", "concentrate and ask again.", "outlook not so good.", "signs point to yes", "very doubtful.", "yes."];
+const ballquotes = ["don't count on it.", "as I see it, yes.", "it is certain.", "reply hazy, try again.", "my reply is no.", "most likely.", "it is decidedly so.", "ask again later.", "my sources say no.", "outlook good.", "without a doubt.", "better not tell you now.", "yes - definitely.", "cannot predict now.", "you may rely on it.", "concentrate and ask again.", "outlook not so good.", "signs point to yes.", "very doubtful.", "yes."];
 let markovMessage;
 
 // Init
@@ -47,11 +47,15 @@ client.on("message", (message) => {
                 case "§8ball":
                     message.reply(get8Ball())
                     break;
+                case "§ms":
+                    if (message.channel.name == "bot-test")
+                        setTimeout(function(){message.reply(getMarkovMessage())}, 500)
+                    break;
                 default:
                     let rand = Math.random();
                     console.log("Rolled: ", rand);
                     if (rand <= 0.10)
-                        message.reply(getMarkovMessage())
+                        setTimeout(function(){message.reply(getMarkovMessage())}, 500)
                     break;
 			}
 		}
@@ -74,20 +78,13 @@ function getMarkovMessage() {
     let flag = true;
     while (flag) {
         line = lines[Math.floor(Math.random() * (lines.length + 1))];
-        words = line.split(" ");
+        words = line.replace("\n", "").replace("  ", " ").replace("\r", "").split(" ");
 
         console.log("line: " + line)
 
-        for (let i = 0; i < words.length; i++) {
-            if (Math.random() <= 0.4 && words[i] != "NaN" && words[i] != undefined)
+        for (let i = 0; i < words.length; i++)
+            if (Math.random() <= 0.5 /*&& words[i] != "NaN" && words[i] != "\n" && words[i] != "\r" && words[i] != "" && words[i] != undefined*/)
                 markovsentance += words[i] + " ";
-            else
-                markovsentance += "";
-
-            console.log("ms: ", markovsentance);
-            markovsentance.replace("  ", " ")
-            markovsentance.replace("\n", "")
-        }
 
         if (Math.random() >= 0.5 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
             flag = false;
@@ -96,7 +93,7 @@ function getMarkovMessage() {
     console.log("Returning: ", markovsentance)
     console.log("Length: ", markovsentance.length)
 
-    return markovsentance;
+    return markovsentance.replace("\n", "").replace("  ", " ").replace("\r", "");
 }
 
 /*
