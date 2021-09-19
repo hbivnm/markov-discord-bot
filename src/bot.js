@@ -54,16 +54,18 @@ client.on("message", (message) => {
                         setTimeout(function(){message.reply(getMarkovMessage())}, 500)
                     break;
                 default:
-                    let rand = Math.random();
-                    console.log("Rolled (boundary): ", rand, "("+boundary+")");
-                    if (rand <= boundary) {
-                        boundary -= 0.20;
-                        if (boundary < 0.0)
+                    if (message.channel.name != "bot-test") {
+                        let rand = Math.random();
+                        console.log("Rolled (boundary): ", rand, "("+boundary+")");
+                        if (rand <= boundary) {
+                            boundary -= 0.20;
+                            if (boundary < 0.0)
                             boundary = 0.0
-                        setTimeout(function(){message.reply(getMarkovMessage())}, 500)
-                    }
-                    else
+                            setTimeout(function(){message.reply(getMarkovMessage())}, 500)
+                        }
+                        else
                         boundary += 0.04;
+                    }
                     break;
 			}
 		}
