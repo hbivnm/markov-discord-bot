@@ -37,6 +37,7 @@ function inPermittedChannel(channelName) {
 client.on("message", (message) => {
 	try {
 		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) {
+            console.log(message.content)
 			switch (message.content.split(" ")[0]) {
 				case "§ping":
 					message.reply("Pong!");
@@ -92,11 +93,14 @@ function getMarkovMessage() {
 
         console.log("line: " + line)
 
-        for (let i = 0; i < words.length; i++)
-            if (Math.random() <= 0.5 /*&& words[i] != "NaN" && words[i] != "\n" && words[i] != "\r" && words[i] != "" && words[i] != undefined*/)
-                markovsentance += words[i] + " ";
+        let wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2)
 
-        if (Math.random() >= 0.5 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
+        for (let i = 0; i < wordsToTake; i++)
+            if (Math.random() <= 0.95) {
+                markovsentance += getEmoteIfExist(words[i]) + " ";
+            }
+
+        if (Math.random() >= 0.7 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
             flag = false;
     }
     
@@ -104,6 +108,31 @@ function getMarkovMessage() {
     console.log("Length: ", markovsentance.length)
 
     return markovsentance.replace("\n", "").replace("  ", " ").replace("\r", "");
+}
+
+function getEmoteIfExist(word) {
+    switch (word) {
+        case "tf":
+            return "<:tf:839473497290047528>"
+        case "OMEGALUL":
+            return "<:OMEGALUL:800144542031544351>"
+        case "MegaLuL":
+            return "<:MegaLuL:845295410222071839>"
+        case "PogU":
+            return "<:PogU:540485322518036490>"
+        case "PogO":
+            return "<:PogO:702106081740193853>"
+        case "Pog":
+            return "<:Pog:568197265987207209>"
+        case "WeirdChamp":
+            return "<:WeirdChamp:538374298700742696>"
+        case "LULW":
+            return "<:LULW:539809545128509440>"
+        case "amongE":
+            return "<:amongE:889172223724765235>"
+        default:
+            return word;
+    }
 }
 
 /*
