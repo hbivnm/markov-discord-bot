@@ -36,8 +36,8 @@ function inPermittedChannel(channelName) {
 
 client.on("message", (message) => {
 	try {
-		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) {
-            console.log(message.content)
+		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) { 
+            console.log("Channel: " + message.channel.name + " Content: " + message.content + " (" + message.content.length + ")")
 			switch (message.content.split(" ")[0]) {
 				case "§ping":
 					message.reply("Pong!");
@@ -55,17 +55,27 @@ client.on("message", (message) => {
                         setTimeout(function(){message.reply(getMarkovMessage())}, 500)
                     break;
                 default:
-                    if (message.channel.name != "bot-test") {
+                    if (message.channel.name == "general") {
                         let rand = Math.random();
                         console.log("Rolled (boundary): ", rand, "("+boundary+")");
                         if (rand <= boundary) {
-                            boundary -= 0.20;
-                            if (boundary < 0.0)
-                            boundary = 0.0
+                            boundary -= 0.25;
+                            if (boundary < 0.0001)
+                                boundary = 0.0
                             setTimeout(function(){message.reply(getMarkovMessage())}, 500)
                         }
-                        else
-                        boundary += 0.04;
+                        else {
+                            boundary += 0.025;
+                        }
+                    } else if (message.channel.name == "best-of-leastinhumanbot") {
+                        if (message.content.length > 0) {
+                            message.delete();
+                            message.author.send("Only pictures are allowed in my hall of fame! :D")
+                        }
+                        else {
+                            message.react('✔️');
+                            message.react('❌');
+                        }
                     }
                     break;
 			}
@@ -81,7 +91,6 @@ function get8Ball() {
 
 function getMarkovMessage() {
     console.log("\nGetting markov message...")
-    //return "<a:SHUNGITE:713712006120734722>";
     let lines = dictionary.split('\n');
     let line = "";
     let markovsentance = "";
@@ -130,6 +139,8 @@ function getEmoteIfExist(word) {
             return "<:LULW:539809545128509440>"
         case "amongE":
             return "<:amongE:889172223724765235>"
+        case "bananal":
+            return "<:bananal:889287118935953459>";
         default:
             return word;
     }
