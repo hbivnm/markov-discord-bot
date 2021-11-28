@@ -52,7 +52,12 @@ client.on("message", (message) => {
                     break;
                 case "§ms":
                     if (message.channel.name == "bot-test")
-                        setTimeout(function(){message.reply(getMarkovMessage())}, 500)
+                    {
+                        if (message.content.length > 3)
+                            message.reply(getMarkovMessage(message.content.substring(4)))
+                        else
+                            message.reply("`§ms <TEST SENTANCE>`")
+                    }
                     break;
                 default:
                     if (message.channel.name == "general") {
@@ -62,7 +67,7 @@ client.on("message", (message) => {
                             boundary -= 0.25;
                             if (boundary < 0.0001)
                                 boundary = 0.0
-                            setTimeout(function(){message.reply(getMarkovMessage())}, 500)
+                            message.reply(getMarkovMessage(message.content))
                         }
                         else {
                             boundary += 0.025;
@@ -89,34 +94,54 @@ function get8Ball() {
     return ballquotes[Math.floor(Math.random() * (ballquotes.length + 1))];
 }
 
-function getMarkovMessage() {
+function getMarkovMessage(userMessage) {
     console.log("\nGetting markov message...")
     let lines = dictionary.split('\n');
-    let line = "";
     let markovsentance = "";
 
-    let flag = true;
-    while (flag) {
-        line = lines[Math.floor(Math.random() * (lines.length + 1))];
-        words = line.replace("\n", "").replace("  ", " ").replace("\r", "").split(" ");
+    let failedFindings = 0;
+
+    let relatedWords = userMessage.split(" ");
+    let relationQuotaInc = 1 / relatedWords.length;
+
+    do {
+        let relationQuota = 0.0;
+        
+        let line = lines[Math.floor(Math.random() * (lines.length + 1))];
+        if (line == undefined)
+            continue;
+
+        let words = line.replace("\n", "").replace("  ", " ").replace("\r", "").split(" ");
+
+        relatedWords.forEach(word => {
+            if (line.includes(word))
+                relationQuota += relationQuotaInc;
+        });
+
+        console.log("[i] failedFindings: " + failedFindings)
+
+        if (relationQuota < 0.4 && failedFindings < 50000) {
+            failedFindings++;
+            continue;
+        }
 
         console.log("line: " + line)
 
-        let wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2)
+        let wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2);
+        let startingIndex = Math.floor(Math.random() * ((wordsToTake - 1) - 2) + 2) - 1;
 
-        for (let i = 0; i < wordsToTake; i++)
-            if (Math.random() <= 0.95) {
-                markovsentance += getEmoteIfExist(words[i]) + " ";
-            }
+        if (startingIndex == -1)
+            startingIndex = 0;
 
-        if (Math.random() >= 0.7 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
-            flag = false;
-    }
+        for (let i = startingIndex; i < wordsToTake; i++)
+            markovsentance += getEmoteIfExist(words[i]) + " ";
+
+    } while (markovsentance.length < 10) //&& (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
     
     console.log("Returning: ", markovsentance)
     console.log("Length: ", markovsentance.length)
 
-    return markovsentance.replace("\n", "").replace("  ", " ").replace("\r", "");
+    return markovsentance.replace("\n", "").replace("  ", " ").replace("\r", "").replace("undefined", "");
 }
 
 function getEmoteIfExist(word) {
