@@ -26,14 +26,6 @@ client.on("ready", () => {
     client.user.setActivity("your every move.", { type: "WATCHING" });
 });
 
-function inPermittedChannel(channelName) {
-	let config = JSON.parse(fs.readFileSync(__dirname + "/../bot-config.json"));
-    if (config.permittedChannels.indexOf(channelName) > -1)
-        return true;
-    else
-        return false;
-}
-
 client.on("message", (message) => {
 	try {
 		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) { 
@@ -54,7 +46,8 @@ client.on("message", (message) => {
                     if (message.channel.name == "bot-test")
                     {
                         if (message.content.length > 3)
-                            message.reply(getMarkovMessage(message.content.substring(4)))
+                            //message.reply(getMarkovMessage(message.content.substring(4)))
+                            message.channel.send(getMarkovMessage(message.content.substring(4)))
                         else
                             message.reply("`§ms <TEST SENTANCE>`")
                     }
@@ -67,7 +60,7 @@ client.on("message", (message) => {
                             boundary -= 0.25;
                             if (boundary < 0.0001)
                                 boundary = 0.0
-                            message.reply(getMarkovMessage(message.content))
+                            message.channel.send(getMarkovMessage(message.content))
                         }
                         else {
                             boundary += 0.025;
@@ -104,7 +97,7 @@ function getMarkovMessage(userMessage) {
     let relatedWords = userMessage.split(" ");
     let relationQuotaInc = 1 / relatedWords.length;
 
-    do {
+    while (true) {
         let relationQuota = 0.0;
         
         let line = lines[Math.floor(Math.random() * (lines.length + 1))];
@@ -118,30 +111,48 @@ function getMarkovMessage(userMessage) {
                 relationQuota += relationQuotaInc;
         });
 
-        console.log("[i] failedFindings: " + failedFindings)
-
-        if (relationQuota < 0.4 && failedFindings < 50000) {
+        
+        if (relationQuota < 0.3 && failedFindings < 50000) {
             failedFindings++;
             continue;
         }
 
         console.log("line: " + line)
 
-        let wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2);
-        let startingIndex = Math.floor(Math.random() * ((wordsToTake - 1) - 2) + 2) - 1;
+        let wordsToTake = 0;
+        let startingIndex = 0;
 
-        if (startingIndex == -1)
-            startingIndex = 0;
+        wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2);
+        console.log("wordsToTake: " + wordsToTake)
+        if (wordsToTake != 0) {
 
-        for (let i = startingIndex; i < wordsToTake; i++)
-            markovsentance += getEmoteIfExist(words[i]) + " ";
+            if (words.length > 1 && wordsToTake != 1)
+                startingIndex = Math.floor(Math.random() * ((wordsToTake - 1) - 2) + 2) - 1;
 
-    } while (markovsentance.length < 10) //&& (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " "))
+            console.log("startingIndex: " + startingIndex)
+            
+            for (let i = startingIndex; i <= wordsToTake - 1; i++)
+               markovsentance += getEmoteIfExist(words[i]) + " ";
+        }
+
+        if (Math.random() <= 0.7 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " " && markovsentance.length != 0))
+            break;
+    }
     
-    console.log("Returning: ", markovsentance)
-    console.log("Length: ", markovsentance.length)
+    console.log("Lines searched: " + failedFindings);
+    console.log("Returning: ", markovsentance);
+    console.log("Length: ", markovsentance.length);
 
-    return markovsentance.replace("\n", "").replace("  ", " ").replace("\r", "").replace("undefined", "");
+    return markovsentance.replace("\n", "").replace("   ", " ").replace("  ", " ").replace("\r", "");
+}
+
+// Funcs
+function inPermittedChannel(channelName) {
+	let config = JSON.parse(fs.readFileSync(__dirname + "/../bot-config.json"));
+    if (config.permittedChannels.indexOf(channelName) > -1)
+        return true;
+    else
+        return false;
 }
 
 function getEmoteIfExist(word) {
