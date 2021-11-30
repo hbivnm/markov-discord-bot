@@ -60,7 +60,7 @@ client.on("message", (message) => {
                             boundary -= 0.25;
                             if (boundary < 0.0001)
                                 boundary = 0.0
-                            message.channel.send(getMarkovMessage(message.content))
+                            setTimeout(function(){message.channel.send(getMarkovMessage(message.content))}, 1000)
                         }
                         else {
                             boundary += 0.025;
@@ -88,7 +88,7 @@ function get8Ball() {
 }
 
 function getMarkovMessage(userMessage) {
-    console.log("\nGetting markov message...")
+    console.log("\nGetting markov message...\n")
     let lines = dictionary.split('\n');
     let markovsentance = "";
 
@@ -107,35 +107,41 @@ function getMarkovMessage(userMessage) {
         let words = line.replace("\n", "").replace("  ", " ").replace("\r", "").split(" ");
 
         relatedWords.forEach(word => {
+            
+            let wordSplit = word.split(":")
+            if (wordSplit[0].startsWith("<") && wordSplit[2].endsWith(">"))
+                word = wordSplit[1]
+
             if (line.includes(word))
                 relationQuota += relationQuotaInc;
         });
 
         
-        if (relationQuota < 0.3 && failedFindings < 50000) {
+        if (relationQuota < 0.2 && failedFindings < 50000) {
             failedFindings++;
             continue;
         }
 
-        console.log("line: " + line)
+        console.log("Line: " + line)
+        console.log("Relation Q.: " + relationQuota + "\n")
 
         let wordsToTake = 0;
         let startingIndex = 0;
 
         wordsToTake = Math.floor(Math.random() * ((words.length - 1) - 2) + 2);
-        console.log("wordsToTake: " + wordsToTake)
+        //console.log("wordsToTake: " + wordsToTake)
         if (wordsToTake != 0) {
 
             if (words.length > 1 && wordsToTake != 1)
                 startingIndex = Math.floor(Math.random() * ((wordsToTake - 1) - 2) + 2) - 1;
 
-            console.log("startingIndex: " + startingIndex)
+            //console.log("startingIndex: " + startingIndex)
             
             for (let i = startingIndex; i <= wordsToTake - 1; i++)
                markovsentance += getEmoteIfExist(words[i]) + " ";
         }
 
-        if (Math.random() <= 0.7 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " " && markovsentance.length != 0))
+        if (Math.random() <= 0.85 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " " && markovsentance.length != 0))
             break;
     }
     
@@ -173,10 +179,28 @@ function getEmoteIfExist(word) {
             return "<:WeirdChamp:538374298700742696>"
         case "LULW":
             return "<:LULW:539809545128509440>"
+        case "LULE":
+            return "<:LULE:915291048404742154>"
         case "amongE":
             return "<:amongE:889172223724765235>"
         case "bananal":
-            return "<:bananal:889287118935953459>";
+            return "<:bananal:889287118935953459>"
+        case "forsenE":
+            return "<:forsenE:890572318496153670>"
+        case "forsenScoots":
+            return "<:forsenScoots:890572596184231978>"
+        case "forsenCD":
+            return "<:forsenCD:800144591021015042>"
+        case "WifeCheck":
+            return "<a:WifeCheck:745316201814818916>"
+        case "Clueless":
+            return "<:Clueless:902251055948128286>"
+        case "ZULUL":
+            return "<:ZULUL:539103934392827925>"
+        case "NOIDONTTHINKSO":
+            return "<a:NOIDONTTHINKSO:915295008318451713>"
+        case "YESIDOTHINKSO":
+            return "<a:YESIDOTHINKSO:915295191013924896>"
         default:
             return word;
     }
