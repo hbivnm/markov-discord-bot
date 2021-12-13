@@ -71,7 +71,7 @@ client.on("message", (message) => {
                             message.author.send("Only pictures are allowed in my hall of fame! :D")
                         }
                         else {
-                            message.react('✔️');
+                            message.react('✅');
                             message.react('❌');
                         }
                     }
@@ -109,7 +109,7 @@ function getMarkovMessage(userMessage) {
         relatedWords.forEach(word => {
             
             let wordSplit = word.split(":")
-            if (wordSplit[0].startsWith("<") && wordSplit[2].endsWith(">"))
+            if (wordSplit.length > 1 && wordSplit[0].startsWith("<") && wordSplit[2].endsWith(">"))
                 word = wordSplit[1]
 
             if (line.includes(word))
