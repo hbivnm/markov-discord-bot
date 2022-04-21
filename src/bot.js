@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const fs = require("fs");
 const { Client } = require("discord.js");
+const { count } = require("console");
 
 // Global
 const ballquotes = ["don't count on it.", "as I see it, yes.", "it is certain.", "reply hazy, try again.", "my reply is no.", "most likely.", "it is decidedly so.", "ask again later.", "my sources say no.", "outlook good.", "without a doubt.", "better not tell you now.", "yes - definitely.", "cannot predict now.", "you may rely on it.", "concentrate and ask again.", "outlook not so good.", "signs point to yes.", "very doubtful.", "yes."];
@@ -13,12 +14,16 @@ const client = new Client();
 client.login(process.env.BOT_TOKEN);
 
 let dictionary;
+let pure_dictionary;
+let pure_dictionary_words;
 fs.readFile("./dictionary.txt", "utf8", (err, data) => {
     if (err) {
         console.error(err);
         return err;
     }
     dictionary = data;
+    pure_dictionary = dictionary.replace(/\n|\r/g, " ")
+    pure_dictionary_words = pure_dictionary.split(" ");
 })
 
 client.on("ready", () => {
@@ -47,20 +52,29 @@ client.on("message", (message) => {
                     {
                         if (message.content.length > 3)
                             //message.reply(getMarkovMessage(message.content.substring(4)))
-                            message.channel.send(getMarkovMessage(message.content.substring(4)))
+                            message.channel.send(getRelatedMessage(message.content.substring(4)))
                         else
                             message.reply("`§ms <TEST SENTANCE>`")
+                    }
+                    break;
+                case "§markov":
+                    if (message.channel.name == "bot-test")
+                    {
+                        if (message.content.length > 8 && message.content.split(" ").length > 2)
+                            message.channel.send(getMarkovMessage(message.content.substring(8)))
+                        else
+                            message.reply("`§markov <TEST SENTANCE OF AT LEAST TWO WORDS>`")
                     }
                     break;
                 default:
                     if (message.channel.name == "general") {
                         let rand = Math.random();
                         console.log("Rolled (boundary): ", rand, "("+boundary+")");
-                        if (rand <= boundary) {
-                            boundary -= 0.25;
+                        if (rand <= boundary && message.content.split(" ").length >= 2) {
+                            boundary -= 0.15;
                             if (boundary < 0.0001)
                                 boundary = 0.0
-                            setTimeout(function(){message.channel.send(getMarkovMessage(message.content))}, 1000)
+                            setTimeout(function(){message.channel.send(getRelatedMessage(message.content))}, 1000)
                         }
                         else {
                             boundary += 0.025;
@@ -87,8 +101,75 @@ function get8Ball() {
     return ballquotes[Math.floor(Math.random() * (ballquotes.length + 1))];
 }
 
-function getMarkovMessage(userMessage) {
-    console.log("\nGetting markov message...\n")
+// Current prefix size is set to 2
+function getMarkovMessage(userMessage, keySize = 2) {
+    console.log("\nGenerating markov message...");
+    let markovMessage = "";
+
+    // Should be moved to only do once, no need to do it more than once after startup
+    prefix_suffix_map = {};
+    for (i = 0; i < pure_dictionary_words.length - 2; i++) {
+        key = "";
+        for (j = 0; j < keySize; j++) {
+            if (pure_dictionary_words[i + j] == "")
+              continue;
+            key += pure_dictionary_words[i + j].trim() + " ";
+        } 
+
+        if (i + keySize < pure_dictionary_words.length)
+            value = pure_dictionary_words[i + keySize].trim();
+        else
+            value = ""
+
+        if (prefix_suffix_map[key] === undefined) 
+            prefix_suffix_map[key] = [value]
+        else if (prefix_suffix_map[key].includes(value))
+            continue;
+        else 
+            prefix_suffix_map[key] = prefix_suffix_map[key].concat([value])
+    }
+
+    n = 0;
+    rn = Math.floor(Math.random() * Object.keys(prefix_suffix_map).length);
+    userMessage = userMessage.replace("<@886995935324946452>", "");
+    userMessageWords = userMessage.split(" ");
+    prefixStartInd = Math.floor(Math.random() * (userMessage.split(" ").length - 1));
+    prefix = userMessageWords[prefixStartInd] + " " + userMessageWords[prefixStartInd + 1] + " ";
+    markovMessage += prefix;
+
+    while (true) {
+        let suffixList = prefix_suffix_map[prefix];
+
+        // Key (prefix) does not exist, so no value (suffix) available
+        if (suffixList !== undefined) {
+            // If only one suffix possible
+            if (suffixList.length === 1) {
+                if (suffixList[0] == "")
+                    markovMessage += " "
+                else
+                    markovMessage += suffixList[0] + " "
+            } else {
+                rn = Math.floor(Math.random() * suffixList.length);
+                markovMessage += suffixList[rn] + " "
+            }
+        
+            if (markovMessage.length >= userMessage.length) {
+                return markovMessage
+            }
+        }
+
+        if (n + 1 >= markovMessage.split(" ").length) {
+            return markovMessage
+        }
+
+        n += 1;
+        prefix = markovMessage.split(" ")[n] + " " + markovMessage.split(" ")[n + 1] // Holy shit this is so lazy ???
+    }
+}
+
+// Old function to get a "related message"
+function getRelatedMessage(userMessage) {
+    console.log("\nGetting related message...\n");
     let lines = dictionary.split('\n');
     let markovsentance = "";
 
@@ -117,7 +198,7 @@ function getMarkovMessage(userMessage) {
         });
 
         
-        if (relationQuota < 0.2 && failedFindings < 50000) {
+        if (relationQuota < 0.1 && failedFindings < 50000) {
             failedFindings++;
             continue;
         }
@@ -141,7 +222,7 @@ function getMarkovMessage(userMessage) {
                markovsentance += getEmoteIfExist(words[i]) + " ";
         }
 
-        if (Math.random() <= 0.85 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " " && markovsentance.length != 0))
+        if (Math.random() <= 0.25 && (markovsentance != undefined && markovsentance != NaN && markovsentance != "" & markovsentance != " " && markovsentance.length != 0))
             break;
     }
     
@@ -201,6 +282,12 @@ function getEmoteIfExist(word) {
             return "<a:NOIDONTTHINKSO:915295008318451713>"
         case "YESIDOTHINKSO":
             return "<a:YESIDOTHINKSO:915295191013924896>"
+		case "doctorWTF":
+			return "<:doctorWTF:782957393725620246>"
+		case "docInsane":
+			return "<:docInsane:850377679202025512>"
+        case "sussy":
+            return "<a:sussy:869594020672860180>"
         default:
             return word;
     }
