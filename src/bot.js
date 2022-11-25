@@ -32,16 +32,16 @@ client.on("ready", () => {
 
 client.on("message", (message) => {
 	try {
-        if (isForbiddenMessage(message)) {
-            message.delete()
-            console.log(`[i] Deleted forbidden message by ${message.author.username}`)
-        }
-
 		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) { 
             console.log(`[i] Read new message in #${message.channel.name}: "${message.content}" (${message.content.length})`)
+            if (isForbiddenMessage(message)) {
+                message.delete()
+                console.log(`[i] Deleted forbidden message by ${message.author.username}`)
+            }
+
             let clean_message_content = "";
             let words_in_message_content = message.content.replace("§markov ", "").split(" ")
-            if (words_in_message_content.length >= 2 && message.channel.name == "general") {
+            if (words_in_message_content.length >= 3 && message.channel.name == "general") {
                 words_in_message_content.forEach(word => {
                     if ((word[0] != "<" && word[word.length - 1] != ">") && word[0] != "§" && word != "" && word.indexOf("https://") == -1 && word.indexOf("http://") == -1)
                     clean_message_content += word + " "
@@ -98,11 +98,14 @@ client.on("message", (message) => {
                             markov_message = MarkovChain.generateMarkovMessageV2(message.content)
 
                             if (markov_message.split(" ").length > 2) {
-                                setTimeout(function(){message.channel.send(markov_message)}, 1000)
+                                setTimeout(function(){message.channel.send(markov_message)}, 1000);
                                 boundary -= 0.25;
                                 if (boundary < 0.0) {
-                                    boundary = 0.0
+                                    boundary = 0.0;
                                 }
+                            }
+                            else {
+                                boundary = 1.0;
                             }
                         }
                         else {
