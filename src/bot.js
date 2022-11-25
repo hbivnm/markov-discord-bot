@@ -68,7 +68,6 @@ client.on("message", (message) => {
                     if (message.channel.name == "bot-test")
                     {
                         if (message.content.length > 3)
-                            //message.reply(getMarkovMessage(message.content.substring(4)))
                             message.channel.send(MarkovChain.getRelatedMessage(message.content.substring(4)))
                         else
                             message.reply("`§ms <TEST SENTANCE>`")

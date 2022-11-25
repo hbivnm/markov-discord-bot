@@ -19,7 +19,7 @@ function generateMarkovMessageV2(user_message, key_size = 2) {
                 if (words_in_line[i + j] == "")
                     continue;
                 key += words_in_line[i + j].trim() + " "
-                key = key;
+                key = key.toLowerCase();
             }
 
             //console.log("key: \"" + key + "\"")
@@ -46,7 +46,7 @@ function generateMarkovMessageV2(user_message, key_size = 2) {
     rn = Math.floor(Math.random() * Object.keys(prefix_suffix_map).length);
     while (user_message.indexOf("<@886995935324946452>") != -1)
         user_message = user_message.replace("<@886995935324946452>", "");
-    user_message_words = user_message.split(" ");
+    user_message_words = user_message.toLowerCase().split(" ");
     prefixStartInd = Math.floor(Math.random() * (user_message.split(" ").length - 1));
     prefix = user_message_words[prefixStartInd] + " " + user_message_words[prefixStartInd + 1] + " ";
     markov_message += prefix;
@@ -74,6 +74,7 @@ function generateMarkovMessageV2(user_message, key_size = 2) {
 
         n += 1;
         prefix = markov_message.split(" ")[n] + " " + markov_message.split(" ")[n + 1] + " "; // Holy shit this is so lazy ???
+        prefix = prefix.toLowerCase()
         markov_message = markov_message.replace("  ", " ");
     }
 }
