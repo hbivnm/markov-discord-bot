@@ -13,30 +13,27 @@ function generateMarkovMessageV2(user_message, key_size = 2) {
     dict_lines.forEach(line => {
         let words_in_line = line.split(" ")
         //console.log("New line: \"" + words_in_line + "\"")
-        for (i = 0; i < words_in_line.length - 2; i++) {
+        for (i = 0; i < words_in_line.length - 1; i++) {
             key = "";
             for (j = 0; j < key_size; j++) {
-                if (words_in_line[i + j] == "")
-                    continue;
                 key += words_in_line[i + j].trim() + " "
                 key = key.toLowerCase();
             }
 
-            //console.log("key: \"" + key + "\"")
-            
             if (i + key_size < words_in_line.length)
                 value = words_in_line[i + key_size].trim() + " ";
             else
                 value = ""
 
-            //console.log("value: \"" + value + "\"")
-            
-            if (prefix_suffix_map[key] === undefined) 
+            if (prefix_suffix_map[key] === undefined) {
                 prefix_suffix_map[key] = [value]
-            else if (prefix_suffix_map[key].includes(value))
+            }
+            else if (prefix_suffix_map[key].includes(value)) {
                 continue;
-            else 
+            }
+            else {
                 prefix_suffix_map[key] = prefix_suffix_map[key].concat([value])
+            }
         }
     })
 
@@ -47,9 +44,10 @@ function generateMarkovMessageV2(user_message, key_size = 2) {
     while (user_message.indexOf("<@886995935324946452>") != -1)
         user_message = user_message.replace("<@886995935324946452>", "");
     user_message_words = user_message.toLowerCase().split(" ");
+    user_message_words_orig = user_message.split(" ");
     prefixStartInd = Math.floor(Math.random() * (user_message.split(" ").length - 1));
     prefix = user_message_words[prefixStartInd] + " " + user_message_words[prefixStartInd + 1] + " ";
-    markov_message += prefix;
+    markov_message += user_message_words_orig[prefixStartInd] + " " + user_message_words_orig[prefixStartInd + 1] + " ";
 
     while (true) {
         let suffixList = prefix_suffix_map[prefix];

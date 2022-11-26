@@ -34,21 +34,22 @@ client.on("message", (message) => {
 	try {
 		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) { 
             console.log(`[i] Read new message in #${message.channel.name}: "${message.content}" (${message.content.length})`)
-            if (isForbiddenMessage(message)) {
+            if (isForbiddenMessage(message) && message.channel.name != "video-gif-img-spam") {
                 message.delete()
                 console.log(`[i] Deleted forbidden message by ${message.author.username}`)
             }
 
             let clean_message_content = "";
             let words_in_message_content = message.content.replace("§markov ", "").split(" ")
-            if (words_in_message_content.length >= 3 && message.channel.name == "general") {
+            if (words_in_message_content.length >= 3 && (message.channel.name == "general" || message.channel.name == "video-gif-img-spam")) {
                 words_in_message_content.forEach(word => {
                     if ((word[0] != "<" && word[word.length - 1] != ">") && word[0] != "§" && word != "" && word.indexOf("https://") == -1 && word.indexOf("http://") == -1)
                     clean_message_content += word + " "
                 })
                 clean_message_content = clean_message_content.substring(0, clean_message_content.length - 1)
-                if (clean_message_content !== "") /*&& fs.readFileSync("./dynamic_dict.txt").indexOf(clean_message_content) == -1)*/ {
+                if (clean_message_content !== "" && clean_message_content.split(" ").length >= 3) /*&& fs.readFileSync("./dynamic_dict.txt").indexOf(clean_message_content) == -1)*/ {
                     fs.appendFileSync("./dynamic_dict.txt", clean_message_content + "\r\n");
+                    console.log(`[i] "${clean_message_content}" >> dynamic_dict.txt`)
                 }
             }
 
@@ -90,14 +91,17 @@ client.on("message", (message) => {
                     }
                     break;
                 default:
-                    if (message.channel.name == "general") {
+                    if (message.content.split(" ").length < 2 && (message.channel.name == "general" || message.channel.name == "video-gif-img-spam")) {
+                        console.log(`[i] Message too short for markov.`);
+                    }
+                    else if (message.channel.name == "general" || message.channel.name == "video-gif-img-spam") {
                         let rand = Math.random();
                         console.log(`[?] ${rand} < ${boundary}?`);
                         if (rand <= boundary && message.content.split(" ").length >= 2) {
                             console.log(`[!] Yes!`);
                             markov_message = MarkovChain.generateMarkovMessageV2(message.content)
 
-                            if (markov_message.split(" ").length > 2) {
+                            if (markov_message.split(" ").length > 2 && markov_message != message.content) {
                                 setTimeout(function(){message.channel.send(markov_message)}, 1000);
                                 boundary -= 0.25;
                                 if (boundary < 0.0) {
@@ -129,6 +133,7 @@ client.on("message", (message) => {
 		console.log(ex);
 	}
 });
+
 
 // Funcs
 function isForbiddenMessage(message) {
