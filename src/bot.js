@@ -6,24 +6,12 @@ const MarkovChain = require("./MarkovChain.js")
 const SillyFuncs = require("./SillyFuncs.js")
 
 // Global
-const ballquotes = ["don't count on it.", "as I see it, yes.", "it is certain.", "reply hazy, try again.", "my reply is no.", "most likely.", "it is decidedly so.", "ask again later.", "my sources say no.", "outlook good.", "without a doubt.", "better not tell you now.", "yes - definitely.", "cannot predict now.", "you may rely on it.", "concentrate and ask again.", "outlook not so good.", "signs point to yes.", "very doubtful.", "yes."];
 let markov_message;
 let boundary = 0.10;
 
 // Init
 const client = new Client();
 client.login(process.env.BOT_TOKEN);
-
-let dictionary;
-let pure_dictionary_words;
-//fs.readFile("./dictionary.txt", "utf8", (err, data) => {
-//    if (err) {
-//        console.error(err);
-//        return err;
-//    }
-//    dictionary = data;
-//    pure_dictionary_words = dictionary.split(" ");
-//})
 
 client.on("ready", () => {
 	console.log(`[i] ${client.user.tag} has logged in!`);
@@ -34,37 +22,38 @@ client.on("message", (message) => {
 	try {
 		if (inPermittedChannel(message.channel.name) && message.author.id != process.env.BOT_ID) { 
             console.log(`[i] Read new message in #${message.channel.name}: "${message.content}" (${message.content.length})`)
-            if (isForbiddenMessage(message) && message.channel.name != "video-gif-img-spam") {
+            if (isForbiddenMessage(message.content) && message.channel.name != "video-gif-img-spam") {
                 message.delete()
                 console.log(`[i] Deleted forbidden message by ${message.author.username}`)
             }
 
-            let clean_message_content = "";
-            let words_in_message_content = message.content.replace("§markov ", "").split(" ")
-            if (words_in_message_content.length >= 3 && (message.channel.name == "general" || message.channel.name == "video-gif-img-spam")) {
-                words_in_message_content.forEach(word => {
-                    if ((word[0] != "<" && word[word.length - 1] != ">") && word[0] != "§" && word != "" && word.indexOf("https://") == -1 && word.indexOf("http://") == -1)
-                    clean_message_content += word + " "
-                })
-                clean_message_content = clean_message_content.substring(0, clean_message_content.length - 1)
-                if (clean_message_content !== "" && clean_message_content.split(" ").length >= 3) /*&& fs.readFileSync("./dynamic_dict.txt").indexOf(clean_message_content) == -1)*/ {
-                    fs.appendFileSync("./dynamic_dict.txt", clean_message_content + "\r\n");
-                    console.log(`[i] "${clean_message_content}" >> dynamic_dict.txt`)
-                }
-            }
-
 			switch (message.content.split(" ")[0]) {
+                /**
+                 * Ping to check availability.
+                 */
 				case "§ping":
 					message.reply("Pong!");
 					break;
+
+                /**
+                 * Get a random number
+                 */
 				case "§random":
                 case "§rand":
                     message.reply(Math.floor(Math.random() * 100));
                     break;
+
+                /**
+                 * Shake the 8ball for answers
+                 */
                 case "§8ball":
                     if (message.channel.name == "8ball")
                         message.reply(SillyFuncs.get8Ball())
                     break;
+
+                /**
+                 * Debug old "markov" message
+                 */
                 case "§ms":
                     if (message.channel.name == "bot-test")
                     {
@@ -74,22 +63,27 @@ client.on("message", (message) => {
                             message.reply("`§ms <TEST SENTANCE>`")
                     }
                     break;
+
+                /**
+                 * Debug old markov message
+                 */
                 case "§markov":
                     if (message.channel.name == "bot-test")
                     {
                         if (message.content.length > 8) {
                             markov_message = MarkovChain.generateMarkovMessageV2(message.content.substring(8))
                             console.log(markov_message.split(" ").length)
-                            if (markov_message.split(" ").length <= 2)
-                                markov_message += " (would not be sent: too short!)"
-                            if (markov_message == message.content.substring(8))
-                                markov_message += " (would not be sent: matching!)"
-                            message.channel.send(markov_message)
+                            
+                            message.channel.send(markov_message + isValidMarkovMessage(markov_message, message.content.substring(8)).error_msg)
                         }
                         else
                             message.reply("`§markov <TEST SENTANCE>`")
                     }
                     break;
+
+                /**
+                 * No command
+                 */
                 default:
                     if (message.content.split(" ").length < 2 && (message.channel.name == "general" || message.channel.name == "video-gif-img-spam")) {
                         console.log(`[i] Message too short for markov.`);
@@ -99,16 +93,19 @@ client.on("message", (message) => {
                         console.log(`[?] ${rand} < ${boundary}?`);
                         if (rand <= boundary && message.content.split(" ").length >= 2) {
                             console.log(`[!] Yes!`);
+                            console.log(`[i] Generating markov message (version 2)...\n`);
                             markov_message = MarkovChain.generateMarkovMessageV2(message.content)
+                            let valid_check = isValidMarkovMessage(markov_message, message.content)
 
-                            if (markov_message.split(" ").length > 2 && markov_message != message.content) {
-                                setTimeout(function(){message.channel.send(markov_message)}, 1000);
+                            if (valid_check.is_valid) {
+                                setTimeout(function(){message.channel.send(markov_message)}, 1500);
                                 boundary -= 0.25;
                                 if (boundary < 0.0) {
                                     boundary = 0.0;
                                 }
                             }
                             else {
+                                console.log(`[!] Markov message did not pass: "${markov_message}" ${valid_check.error_msg}`)
                                 boundary = 1.0;
                             }
                         }
@@ -128,6 +125,19 @@ client.on("message", (message) => {
                     }
                     break;
 			}
+            let clean_message_content = "";
+            let words_in_message_content = message.content.replace("§markov ", "").split(" ")
+            if (words_in_message_content.length >= 3 && (message.channel.name == "general" || message.channel.name == "video-gif-img-spam")) {
+                words_in_message_content.forEach(word => {
+                    if ((word[0] != "<" && word[word.length - 1] != ">") && word[0] != "§" && word != "" && word != "" && word.indexOf("https://") == -1 && word.indexOf("http://") == -1)
+                    clean_message_content += word + " "
+                })
+                clean_message_content = clean_message_content.substring(0, clean_message_content.length - 1)
+                if (clean_message_content !== "" && clean_message_content.split(" ").length >= 3 && !isForbiddenMessage(clean_message_content)) {
+                    fs.appendFileSync("./dynamic_dict.txt", clean_message_content + "\r\n");
+                    console.log(`[i] "${clean_message_content}" >> dynamic_dict.txt`)
+                }
+            }
 		}
 	} catch (ex) {
 		console.log(ex);
@@ -136,14 +146,44 @@ client.on("message", (message) => {
 
 
 // Funcs
+function isValidMarkovMessage(markov_message, user_message) {
+    let error_msg = "";
+    let is_valid = true;
+    
+    if (markov_message.split(" ").length <= 2
+        || markov_message == user_message
+        || user_message.indexOf(markov_message) != -1
+    ) {
+        is_valid = false;        
+        error_msg = " (WOULD NOT BE SENT: "
+        if (markov_message.split(" ").length <= 2) {
+            error_msg += "**TOO_SHORT** "
+        }
+        if (markov_message == user_message) {
+            error_msg += "**MATCHING** "
+        }
+        if (user_message.indexOf(markov_message) != -1) {
+            error_msg += "**SUBSTRING** "
+        }
+
+        error_msg += ")"
+    }
+
+    return { is_valid, error_msg }
+}
+
+
 function isForbiddenMessage(message) {
     if (
-        message.content.indexOf("https://tenor") != -1
-        || message.content.indexOf("http://tenor") != -1
-        || message.content.indexOf("https://media.discordapp.net/attachment") != -1
-        || message.content.indexOf("http://media.discordapp.net/attachment") != -1
-        || message.content.indexOf("https://cdn.discordapp.com/attachment") != -1
-        || message.content.indexOf("http://cdn.discordapp.com/attachment") != -1
+        message.indexOf("https://tenor") != -1
+        || message.indexOf("http://tenor") != -1
+        || message.indexOf("https://media.discordapp.net/attachment") != -1
+        || message.indexOf("http://media.discordapp.net/attachment") != -1
+        || message.indexOf("https://cdn.discordapp.com/attachment") != -1
+        || message.indexOf("http://cdn.discordapp.com/attachment") != -1
+        || message.indexOf("https://media1.tenor.com/image") != -1
+        || message.indexOf("http://media1.tenor.com/image") != -1
+        || (message.indexOf("connect") != -1 && message.indexOf(";") != -1 && message.indexOf("password") != -1)
     ) {
         return true
     }

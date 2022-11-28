@@ -1,7 +1,6 @@
 const fs = require("fs");
 
 function generateMarkovMessageV2(user_message, key_size = 2) {
-    console.log(`\nGenerating markov message (version 2)...\n`);
     let markov_message = "";
 
     let dict_lines = fs.readFileSync("./dynamic_dict.txt").toString().split("\r\n");
