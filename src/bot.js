@@ -8,6 +8,7 @@ const SillyFuncs = require("./SillyFuncs.js")
 // Global
 let markov_message;
 let boundary = 0.10;
+let guarantee_hit = false;
 
 // Init
 const client = new Client();
@@ -91,22 +92,23 @@ client.on("message", (message) => {
                     else if (message.channel.name == "general" || message.channel.name == "video-gif-img-spam") {
                         let rand = Math.random();
                         console.log(`[?] ${rand} < ${boundary}?`);
-                        if (rand <= boundary && message.content.split(" ").length >= 2) {
+                        if (guarantee_hit || (rand <= boundary && message.content.split(" ").length >= 2)) {
                             console.log(`[!] Yes!`);
                             console.log(`[i] Generating markov message (version 2)...\n`);
-                            markov_message = MarkovChain.generateMarkovMessageV2(message.content)
-                            let valid_check = isValidMarkovMessage(markov_message, message.content)
+                            markov_message = MarkovChain.generateMarkovMessageV2(message.content);
+                            let valid_check = isValidMarkovMessage(markov_message, message.content);
 
                             if (valid_check.is_valid) {
                                 setTimeout(function(){message.channel.send(markov_message)}, 1500);
+                                guarantee_hit = false;
                                 boundary -= 0.25;
                                 if (boundary < 0.0) {
                                     boundary = 0.0;
                                 }
                             }
                             else {
-                                console.log(`[!] Markov message did not pass: "${markov_message}" ${valid_check.error_msg}`)
-                                boundary = 1.0;
+                                console.log(`[!] Markov message did not pass: "${markov_message}" ${valid_check.error_msg}`);
+                                guarantee_hit = true;
                             }
                         }
                         else {
@@ -116,7 +118,7 @@ client.on("message", (message) => {
                     } else if (message.channel.name == "best-of-leastinhumanbot") {
                         if (message.content.length > 0) {
                             message.delete();
-                            message.author.send("Only pictures are allowed in my hall of fame! :)")
+                            message.author.send("Only pictures are allowed in my hall of fame! :)");
                         }
                         else {
                             message.react('✅');
