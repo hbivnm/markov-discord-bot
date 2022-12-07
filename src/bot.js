@@ -4,13 +4,17 @@ const fs = require("fs");
 const { Client } = require("discord.js");
 const MarkovChain = require("./MarkovChain.js")
 const SillyFuncs = require("./SillyFuncs.js")
+const super_admin_id = "257951111879589890"
 
 // Global
 let markov_message;
 let boundary = 0.10;
 let guarantee_hit = false;
+let forbidden_user_ids = []
 
 // Init
+forbidden_user_ids = fs.readFileSync("./forbidden_user_ids.txt").toString().split("\r\n");
+
 const client = new Client();
 client.login(process.env.BOT_TOKEN);
 
@@ -52,6 +56,31 @@ client.on("message", (message) => {
                         message.reply(SillyFuncs.get8Ball())
                     break;
 
+                case "§forbid":
+                    if (message.channel.name == "bot-test" && message.author.id == super_admin_id) {
+                        if (forbidden_user_ids.indexOf(message.content.split(" ")[1]) == -1) {
+                            forbidden_user_ids.push(message.content.split(" ")[1])
+                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is now ignored.`)
+                        }
+                        else {
+                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is already ignored!`)
+                        }
+                    }
+                    break;
+
+                case "§allow":
+                    if (message.channel.name == "bot-test" && message.author.id == super_admin_id) {
+                        let index_of_forbidden = forbidden_user_ids.indexOf(message.content.split(" ")[1])
+                        if (index_of_forbidden !== -1) {
+                            forbidden_user_ids.splice(index_of_forbidden, 1)
+                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is no longer ignored.`)
+                        }
+                        else {
+                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is not ignored!`)
+                        }
+                    }
+                    break;
+
                 /**
                  * Debug old "markov" message
                  */
@@ -91,7 +120,12 @@ client.on("message", (message) => {
                     }
                     else if (message.channel.name == "general" || message.channel.name == "video-gif-img-spam") {
                         let rand = Math.random();
-                        console.log(`[?] ${rand} < ${boundary}?`);
+                        if (!guarantee_hit) {
+                            console.log(`[?] ${rand} < ${boundary}?`);
+                        }
+                        else {
+                            console.log(`[?] Guaranteed hit?`);
+                        }
                         if (guarantee_hit || (rand <= boundary && message.content.split(" ").length >= 2)) {
                             console.log(`[!] Yes!`);
                             console.log(`[i] Generating markov message (version 2)...\n`);
@@ -109,6 +143,7 @@ client.on("message", (message) => {
                             else {
                                 console.log(`[!] Markov message did not pass: "${markov_message}" ${valid_check.error_msg}`);
                                 guarantee_hit = true;
+                                boundary += 0.005;
                             }
                         }
                         else {
@@ -135,7 +170,7 @@ client.on("message", (message) => {
                     clean_message_content += word + " "
                 })
                 clean_message_content = clean_message_content.substring(0, clean_message_content.length - 1)
-                if (clean_message_content !== "" && clean_message_content.split(" ").length >= 3 && !isForbiddenMessage(clean_message_content)) {
+                if (clean_message_content !== "" && clean_message_content.split(" ").length >= 3 && !isForbiddenMessage(clean_message_content) && !isForbiddenUser(message.author.id)) {
                     fs.appendFileSync("./dynamic_dict.txt", clean_message_content + "\r\n");
                     console.log(`[i] "${clean_message_content}" >> dynamic_dict.txt`)
                 }
@@ -175,6 +210,14 @@ function isValidMarkovMessage(markov_message, user_message) {
 }
 
 
+function isForbiddenUser(id) {
+    if (forbidden_user_ids.includes(id)) {
+        return true;
+    }
+    return false;
+}
+
+
 function isForbiddenMessage(message) {
     if (
         message.indexOf("https://tenor") != -1
@@ -185,6 +228,8 @@ function isForbiddenMessage(message) {
         || message.indexOf("http://cdn.discordapp.com/attachment") != -1
         || message.indexOf("https://media1.tenor.com/image") != -1
         || message.indexOf("http://media1.tenor.com/image") != -1
+        || message.indexOf("https://tmp.projectlounge.pw") != -1
+        || message.indexOf("http://tmp.projectlounge.pw") != -1
         || (message.indexOf("connect") != -1 && message.indexOf(";") != -1 && message.indexOf("password") != -1)
     ) {
         return true
