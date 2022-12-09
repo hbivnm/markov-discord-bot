@@ -60,6 +60,7 @@ client.on("message", (message) => {
                     if (message.channel.name == "bot-test" && message.author.id == super_admin_id) {
                         if (forbidden_user_ids.indexOf(message.content.split(" ")[1]) == -1) {
                             forbidden_user_ids.push(message.content.split(" ")[1])
+                            fs.appendFileSync("./forbidden_user_ids.txt", message.content.split(" ")[1] + "\r\n");
                             message.channel.send(`User with ID "${message.content.split(" ")[1]}" is now ignored.`)
                         }
                         else {
