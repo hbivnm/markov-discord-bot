@@ -56,28 +56,40 @@ client.on("message", (message) => {
                         message.reply(SillyFuncs.get8Ball())
                     break;
 
+                /**
+                 * Add user ID to be ignored (cannot learn from "forbidden" users)
+                 */
                 case "§forbid":
                     if (message.channel.name == "bot-test" && message.author.id == super_admin_id) {
-                        if (forbidden_user_ids.indexOf(message.content.split(" ")[1]) == -1) {
-                            forbidden_user_ids.push(message.content.split(" ")[1])
-                            fs.appendFileSync("./forbidden_user_ids.txt", message.content.split(" ")[1] + "\r\n");
-                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is now ignored.`)
+                        let given_id = message.content.split(" ")[1];
+                        if (forbidden_user_ids.indexOf(given_id) == -1) {
+                            forbidden_user_ids.push(given_id);
+                            fs.appendFileSync("./forbidden_user_ids.txt", given_id + "\r\n");
+                            message.channel.send(`User with ID "${given_id}" is now ignored.`);
+                        }
+                        else if (!containsOnlyNumbers(given_id)) {
+                            message.channel.send(`"${given_id}" is not a valid ID!`);
                         }
                         else {
-                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is already ignored!`)
+                            message.channel.send(`User with ID "${given_id}" is already ignored!`);
                         }
                     }
                     break;
 
+                /**
+                 * Remove user ID to be un-ignored
+                 */
                 case "§allow":
                     if (message.channel.name == "bot-test" && message.author.id == super_admin_id) {
-                        let index_of_forbidden = forbidden_user_ids.indexOf(message.content.split(" ")[1])
-                        if (index_of_forbidden !== -1) {
-                            forbidden_user_ids.splice(index_of_forbidden, 1)
-                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is no longer ignored.`)
+                        let given_id = message.content.split(" ")[1];
+                        let given_id_index = forbidden_user_ids.indexOf(given_id);
+                        if (given_id_index !== -1) {
+                            forbidden_user_ids.splice(given_id_index, 1);
+                            removeLineFromFile("./forbidden_user_ids.txt", given_id);
+                            message.channel.send(`User with ID "${given_id}" is no longer ignored.`);
                         }
                         else {
-                            message.channel.send(`User with ID "${message.content.split(" ")[1]}" is not ignored!`)
+                            message.channel.send(`User with ID "${given_id}" is not ignored!`);
                         }
                     }
                     break;
@@ -184,6 +196,18 @@ client.on("message", (message) => {
 
 
 // Funcs
+function removeLineFromFile(filePath, line) {
+    let fileContents = fs.readFileSync(filePath, 'utf8');
+    let fileLines = fileContents.split('\r\n');
+    let filteredLines = fileLines.filter(l => l !== line);
+    let newFileContents = filteredLines.join('\r\n');
+    fs.writeFileSync(filePath, newFileContents, 'utf8');
+  }
+
+function containsOnlyNumbers(str) {
+    return /^\d+$/.test(str);
+}
+
 function isValidMarkovMessage(markov_message, user_message) {
     let error_msg = "";
     let is_valid = true;
